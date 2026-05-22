@@ -20,6 +20,7 @@ export const authService = {
   saveSession(response: AuthResponse) {
     localStorage.setItem('ns_token', response.access_token)
     localStorage.setItem('ns_user', JSON.stringify(response.user))
+    document.cookie = `ns_token=${response.access_token}; path=/; max-age=604800`
   },
 
   getUser(): User | null {
@@ -36,6 +37,7 @@ export const authService = {
   logout() {
     localStorage.removeItem('ns_token')
     localStorage.removeItem('ns_user')
+    document.cookie = 'ns_token=; path=/; max-age=0'
     window.location.href = '/auth/login'
   },
 
