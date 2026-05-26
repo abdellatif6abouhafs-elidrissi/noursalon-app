@@ -44,10 +44,62 @@ export default function AppointmentsPage() {
   const [selectedAppt, setSelectedAppt] = useState<Appointment | null>(null)
   const [filterStatus, setFilterStatus] = useState<AppointmentStatus | 'all'>('all')
   const [savedAppts, setSavedAppts] = useState<Appointment[]>([])
+  const [loading, setLoading] = useState(true)
 
   useEffect(() => {
-    const raw = localStorage.getItem('ns_appointments')
-    if (raw) setSavedAppts(JSON.parse(raw))
+    const fetchAppointments = async () => {
+      try {
+        const token = typeof window !== 'undefined' ? localStorage.getItem('token') : null
+        const response = await fetch('/api/appointments', {
+          headers: {
+            'Authorization': `Bearer ${token}`,
+          },
+        })
+
+        if (response.ok) {
+          const data = await response.json()
+          const formattedAppts = data.map((appt: any) => ({
+            id: appt.id || appt._id,
+            salonId: 's1',
+            clientId: appt.clientId,
+            client: {
+              id: appt.clientId,
+              firstName: appt.clientName?.split(' ')[0] || 'Unknown',
+              lastName: appt.clientName?.split(' ')[1] || '',
+              phone: '',
+            },
+            staffId: appt.staffId,
+            staff: {
+              id: appt.staffId,
+              firstName: appt.staffName || 'Unknown',
+              lastName: '',
+              color: '#1D9E75',
+            },
+            serviceId: appt.serviceId,
+            service: {
+              id: appt.serviceId,
+              name: appt.serviceName || 'Unknown',
+              duration: 60,
+              price: appt.price || 0,
+              color: '#1D9E75',
+            },
+            date: appt.date,
+            startTime: appt.time || '09:00',
+            endTime: '18:00',
+            status: 'confirmed' as AppointmentStatus,
+            price: appt.price || 0,
+            createdAt: '',
+          }))
+          setSavedAppts(formattedAppts)
+        }
+      } catch (error) {
+        console.error('Failed to fetch appointments:', error)
+      } finally {
+        setLoading(false)
+      }
+    }
+
+    fetchAppointments()
   }, [])
 
   const allAppts = [...BASE_APPTS, ...savedAppts]
