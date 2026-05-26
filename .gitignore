@@ -12,9 +12,20 @@ dist/
 # env
 .env
 .env.local
-.env.production
 
 # misc
 .DS_Store
 *.pem
 npm-debug.log*
+
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+venv/
+env/
+.venv/
+*.egg-info/
+.egg
