@@ -1,5 +1,6 @@
 'use client'
 
+import { useState, useEffect } from 'react'
 import Link from 'next/link'
 import { usePathname } from 'next/navigation'
 import { cn } from '@/lib/utils'
@@ -16,13 +17,18 @@ const NAV = [
   { href: '/staff', label: 'Coiffeurs', icon: Scissors, color: '#BA7517' },
   null, // divider
   { href: '/stats', label: 'Statistiques', icon: BarChart3, color: '#888780' },
-  { href: '/billing', label: 'Paiements', icon: CreditCard, color: '#D85A30' },
   { href: '/settings', label: 'Paramètres', icon: Settings, color: '#888780' },
 ]
 
 export default function Sidebar() {
   const pathname = usePathname()
-  const user = authService.getUser()
+  const [user, setUser] = useState<any>(null)
+  const [hydrated, setHydrated] = useState(false)
+
+  useEffect(() => {
+    setUser(authService.getUser())
+    setHydrated(true)
+  }, [])
 
   return (
     <aside className="w-[220px] bg-zinc-950 flex flex-col h-screen sticky top-0">
