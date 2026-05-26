@@ -6,7 +6,8 @@ import { ObjectId } from 'mongodb';
 export const dynamic = 'force-dynamic';
 
 export async function GET(request: NextRequest, { params }: { params: { slug: string[] } }) {
-  const path = params.slug.join('/');
+  try {
+    const path = params.slug.join('/');
 
   if (path === 'health') {
     return NextResponse.json({ status: 'ok' });
@@ -87,9 +88,14 @@ export async function GET(request: NextRequest, { params }: { params: { slug: st
   }
 
   return NextResponse.json({ detail: 'Not found' }, { status: 404 });
+  } catch (error: any) {
+    console.error('API error:', error);
+    return NextResponse.json({ detail: error.message || 'Internal server error' }, { status: 500 });
+  }
 }
 
 export async function POST(request: NextRequest, { params }: { params: { slug: string[] } }) {
+  try {
   const path = params.slug.join('/');
 
   if (path === 'auth/register') {
@@ -233,4 +239,8 @@ export async function POST(request: NextRequest, { params }: { params: { slug: s
   }
 
   return NextResponse.json({ detail: 'Not found' }, { status: 404 });
+  } catch (error: any) {
+    console.error('API error:', error);
+    return NextResponse.json({ detail: error.message || 'Internal server error' }, { status: 500 });
+  }
 }
