@@ -60,6 +60,8 @@ export const authService = {
   saveSession(data: AuthResponse) {
     localStorage.setItem('token', data.access_token);
     localStorage.setItem('user', JSON.stringify(data.user));
+    // Store token in cookie for middleware
+    document.cookie = `token=${data.access_token}; path=/; max-age=${7 * 24 * 60 * 60}; SameSite=Lax`;
   },
 
   getSession() {
@@ -78,6 +80,8 @@ export const authService = {
   logout() {
     localStorage.removeItem('token');
     localStorage.removeItem('user');
+    // Delete token from cookie
+    document.cookie = 'token=; path=/; max-age=0; SameSite=Lax';
   },
 
   getToken() {
