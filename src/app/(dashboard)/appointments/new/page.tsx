@@ -65,8 +65,6 @@ export default function NewAppointmentPage() {
     setLoading(true)
     try {
       const token = typeof window !== 'undefined' ? localStorage.getItem('token') : null
-      console.log('[APPT] Token from localStorage:', token ? `${token.substring(0, 20)}...` : 'NO TOKEN')
-
       const appointmentData = {
         clientId: selectedClient?.id,
         clientName: `${selectedClient?.firstName} ${selectedClient?.lastName}`,
@@ -79,7 +77,6 @@ export default function NewAppointmentPage() {
         notes,
         price: selectedService?.price,
       }
-      console.log('[APPT] Sending appointment data:', appointmentData)
 
       const response = await fetch('/api/appointments', {
         method: 'POST',
@@ -90,23 +87,17 @@ export default function NewAppointmentPage() {
         body: JSON.stringify(appointmentData),
       })
 
-      console.log('[APPT] Response status:', response.status)
-
       if (!response.ok) {
         const errorData = await response.json().catch(() => ({}))
-        console.log('[APPT] Error response:', errorData)
         const errorMsg = errorData.detail || `HTTP ${response.status}`
         throw new Error(errorMsg)
       }
-
-      const result = await response.json()
-      console.log('[APPT] Success! Created appointment:', result)
 
       setLoading(false)
       setSuccess(true)
       setTimeout(() => router.push('/appointments'), 2000)
     } catch (error) {
-      console.error('[APPT] Error creating appointment:', error)
+      console.error('Error creating appointment:', error)
       setLoading(false)
       alert(`Failed to create appointment: ${error instanceof Error ? error.message : 'Unknown error'}`)
     }
