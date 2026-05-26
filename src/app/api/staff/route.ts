@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { connectToDatabase } from '@/lib/mongodb';
-import { verifyToken, getTokenFromHeader } from '@/lib/auth';
+import { verifyToken, getTokenFromHeader } from '@/lib/auth-server';
 
 export async function GET(request: NextRequest) {
   try {
