@@ -292,6 +292,68 @@ export async function DELETE(request: NextRequest, { params }: { params: { slug:
       }
     }
 
+    if (path.startsWith('clients/')) {
+      const authHeader = request.headers.get('authorization');
+      const token = getTokenFromHeader(authHeader);
+      if (!token || !verifyToken(token)) {
+        return NextResponse.json({ detail: 'Unauthorized' }, { status: 401 });
+      }
+
+      const id = path.split('/')[1];
+      if (!id) {
+        return NextResponse.json({ detail: 'Missing client ID' }, { status: 400 });
+      }
+
+      try {
+        const { db } = await connectToDatabase();
+        const result = await db.collection('clients').deleteOne({
+          _id: new ObjectId(id),
+        });
+
+        if (result.deletedCount === 0) {
+          return NextResponse.json({ detail: 'Client not found' }, { status: 404 });
+        }
+
+        return NextResponse.json({ success: true }, { status: 200 });
+      } catch (error: any) {
+        console.error('Delete client error:', error);
+        return NextResponse.json({
+          detail: `Failed to delete client: ${error.message}`
+        }, { status: 500 });
+      }
+    }
+
+    if (path.startsWith('staff/')) {
+      const authHeader = request.headers.get('authorization');
+      const token = getTokenFromHeader(authHeader);
+      if (!token || !verifyToken(token)) {
+        return NextResponse.json({ detail: 'Unauthorized' }, { status: 401 });
+      }
+
+      const id = path.split('/')[1];
+      if (!id) {
+        return NextResponse.json({ detail: 'Missing staff ID' }, { status: 400 });
+      }
+
+      try {
+        const { db } = await connectToDatabase();
+        const result = await db.collection('staff').deleteOne({
+          _id: new ObjectId(id),
+        });
+
+        if (result.deletedCount === 0) {
+          return NextResponse.json({ detail: 'Staff member not found' }, { status: 404 });
+        }
+
+        return NextResponse.json({ success: true }, { status: 200 });
+      } catch (error: any) {
+        console.error('Delete staff error:', error);
+        return NextResponse.json({
+          detail: `Failed to delete staff: ${error.message}`
+        }, { status: 500 });
+      }
+    }
+
     return NextResponse.json({ detail: 'Not found' }, { status: 404 });
   } catch (error: any) {
     console.error('API error:', error);
