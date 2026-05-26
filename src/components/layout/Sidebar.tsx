@@ -62,14 +62,14 @@ export default function Sidebar() {
       <div className="px-3 pb-4 border-t border-white/5 pt-3">
         <div className="flex items-center gap-3 px-2 py-2 mb-1">
           <div className="w-8 h-8 rounded-full bg-teal-600 flex items-center justify-center text-white text-xs font-medium flex-shrink-0">
-            {user ? `${user.firstName[0]}${user.lastName[0]}` : '??'}
+            {user?.name ? `${user.name[0]}` : '?'}
           </div>
           <div className="min-w-0 flex-1">
             <p className="text-white text-sm font-medium truncate">
-              {user ? `${user.firstName} ${user.lastName}` : 'User'}
+              {user?.name || 'User'}
             </p>
             <p className="text-white/35 text-xs truncate">
-              {user?.role === 'owner' ? 'Patron/ne' : user?.role}
+              {user?.salonName || 'Salon'}
             </p>
           </div>
         </div>
