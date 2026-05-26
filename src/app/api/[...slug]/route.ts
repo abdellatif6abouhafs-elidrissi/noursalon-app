@@ -298,3 +298,47 @@ export async function DELETE(request: NextRequest, { params }: { params: { slug:
     return NextResponse.json({ detail: error.message || 'Internal server error' }, { status: 500 });
   }
 }
+
+export async function PUT(request: NextRequest, { params }: { params: { slug: string[] } }) {
+  try {
+    const path = params.slug?.join('/') || '';
+
+    if (path.startsWith('appointments/')) {
+      const authHeader = request.headers.get('authorization');
+      const token = getTokenFromHeader(authHeader);
+      if (!token || !verifyToken(token)) {
+        return NextResponse.json({ detail: 'Unauthorized' }, { status: 401 });
+      }
+
+      const id = path.split('/')[1];
+      if (!id) {
+        return NextResponse.json({ detail: 'Missing appointment ID' }, { status: 400 });
+      }
+
+      try {
+        const data = await request.json();
+        const { db } = await connectToDatabase();
+        const result = await db.collection('appointments').updateOne(
+          { _id: new ObjectId(id) },
+          { $set: { ...data, updatedAt: new Date() } }
+        );
+
+        if (result.matchedCount === 0) {
+          return NextResponse.json({ detail: 'Appointment not found' }, { status: 404 });
+        }
+
+        return NextResponse.json({ success: true, ...data }, { status: 200 });
+      } catch (appointmentError: any) {
+        console.error('Update appointment error:', appointmentError);
+        return NextResponse.json({
+          detail: `Failed to update appointment: ${appointmentError.message}`
+        }, { status: 500 });
+      }
+    }
+
+    return NextResponse.json({ detail: 'Not found' }, { status: 404 });
+  } catch (error: any) {
+    console.error('API error:', error);
+    return NextResponse.json({ detail: error.message || 'Internal server error' }, { status: 500 });
+  }
+}

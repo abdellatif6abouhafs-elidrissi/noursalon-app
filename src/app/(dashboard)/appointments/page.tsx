@@ -46,6 +46,8 @@ export default function AppointmentsPage() {
   const [savedAppts, setSavedAppts] = useState<Appointment[]>([])
   const [loading, setLoading] = useState(true)
   const [cancelingId, setCancelingId] = useState<string | null>(null)
+  const [editingId, setEditingId] = useState<string | null>(null)
+  const [editForm, setEditForm] = useState({ time: '', notes: '' })
 
   useEffect(() => {
     const fetchAppointments = async () => {
@@ -146,6 +148,41 @@ export default function AppointmentsPage() {
       alert('Error cancelling appointment')
     } finally {
       setCancelingId(null)
+    }
+  }
+
+  const handleSaveEdit = async () => {
+    if (!selectedAppt) return
+
+    setEditingId(selectedAppt.id)
+    try {
+      const token = typeof window !== 'undefined' ? localStorage.getItem('token') : null
+      const response = await fetch(`/api/appointments/${selectedAppt.id}`, {
+        method: 'PUT',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${token}`,
+        },
+        body: JSON.stringify({
+          time: editForm.time,
+          notes: editForm.notes,
+        }),
+      })
+
+      if (response.ok) {
+        const updated = { ...selectedAppt, startTime: editForm.time, notes: editForm.notes }
+        setSavedAppts(savedAppts.map(a => a.id === selectedAppt.id ? updated : a))
+        setSelectedAppt(updated)
+        setEditingId(null)
+        alert('Appointment updated successfully')
+      } else {
+        alert('Failed to update appointment')
+      }
+    } catch (error) {
+      console.error('Error updating appointment:', error)
+      alert('Error updating appointment')
+    } finally {
+      setEditingId(null)
     }
   }
 
@@ -287,43 +324,89 @@ export default function AppointmentsPage() {
         <div className="fixed inset-0 bg-black/30 z-50 flex items-center justify-center p-4" onClick={() => setSelectedAppt(null)}>
           <div className="bg-background border border-border rounded-2xl w-full max-w-sm p-5" onClick={e => e.stopPropagation()}>
             <div className="flex items-center justify-between mb-4">
-              <h3 className="font-medium">Détails maw3id</h3>
-              <button onClick={() => setSelectedAppt(null)} className="text-muted-foreground hover:text-foreground text-lg">×</button>
+              <h3 className="font-medium">{editingId === selectedAppt.id ? 'Modifier maw3id' : 'Détails maw3id'}</h3>
+              <button onClick={() => { setSelectedAppt(null); setEditingId(null) }} className="text-muted-foreground hover:text-foreground text-lg">×</button>
             </div>
-            <div className="flex items-center gap-3 mb-4">
-              <Avatar firstName={selectedAppt.client.firstName} lastName={selectedAppt.client.lastName} size="md" colorIndex={0} />
-              <div>
-                <p className="font-medium">{selectedAppt.client.firstName} {selectedAppt.client.lastName}</p>
-                <p className="text-sm text-muted-foreground">{selectedAppt.client.phone}</p>
-              </div>
-            </div>
-            <div className="space-y-2.5 bg-secondary rounded-xl p-3 mb-4">
-              {[
-                { label: 'Khidma', value: selectedAppt.service.name },
-                { label: 'Coiffeur/se', value: selectedAppt.staff.firstName },
-                { label: 'Tarikh', value: selectedAppt.date },
-                { label: 'Wqet', value: `${selectedAppt.startTime} → ${selectedAppt.endTime}` },
-                { label: 'Prix', value: formatDH(selectedAppt.price) },
-              ].map(r => (
-                <div key={r.label} className="flex justify-between text-sm">
-                  <span className="text-muted-foreground">{r.label}</span>
-                  <span className="font-medium">{r.value}</span>
+
+            {editingId !== selectedAppt.id ? (
+              <>
+                <div className="flex items-center gap-3 mb-4">
+                  <Avatar firstName={selectedAppt.client.firstName} lastName={selectedAppt.client.lastName} size="md" colorIndex={0} />
+                  <div>
+                    <p className="font-medium">{selectedAppt.client.firstName} {selectedAppt.client.lastName}</p>
+                    <p className="text-sm text-muted-foreground">{selectedAppt.client.phone}</p>
+                  </div>
                 </div>
-              ))}
-              <div className="flex justify-between text-sm pt-1 border-t border-border">
-                <span className="text-muted-foreground">Statut</span>
-                <StatusBadge status={selectedAppt.status} />
-              </div>
-            </div>
-            <div className="grid grid-cols-2 gap-2">
-              <button disabled className="py-2 bg-primary text-primary-foreground rounded-lg text-xs font-medium hover:opacity-90 transition-opacity disabled:opacity-50">Modifier</button>
-              <button
-                onClick={() => selectedAppt && handleCancelAppointment(selectedAppt.id)}
-                disabled={cancelingId === selectedAppt?.id}
-                className="py-2 border border-destructive text-destructive rounded-lg text-xs hover:bg-red-50 transition-colors disabled:opacity-50">
-                {cancelingId === selectedAppt?.id ? 'Kaymsahel...' : 'Annuler'}
-              </button>
-            </div>
+                <div className="space-y-2.5 bg-secondary rounded-xl p-3 mb-4">
+                  {[
+                    { label: 'Khidma', value: selectedAppt.service.name },
+                    { label: 'Coiffeur/se', value: selectedAppt.staff.firstName },
+                    { label: 'Tarikh', value: selectedAppt.date },
+                    { label: 'Wqet', value: `${selectedAppt.startTime} → ${selectedAppt.endTime}` },
+                    { label: 'Prix', value: formatDH(selectedAppt.price) },
+                  ].map(r => (
+                    <div key={r.label} className="flex justify-between text-sm">
+                      <span className="text-muted-foreground">{r.label}</span>
+                      <span className="font-medium">{r.value}</span>
+                    </div>
+                  ))}
+                  <div className="flex justify-between text-sm pt-1 border-t border-border">
+                    <span className="text-muted-foreground">Statut</span>
+                    <StatusBadge status={selectedAppt.status} />
+                  </div>
+                </div>
+                <div className="grid grid-cols-2 gap-2">
+                  <button
+                    onClick={() => { setEditingId(selectedAppt.id); setEditForm({ time: selectedAppt.startTime, notes: '' }) }}
+                    className="py-2 bg-primary text-primary-foreground rounded-lg text-xs font-medium hover:opacity-90 transition-opacity">
+                    Modifier
+                  </button>
+                  <button
+                    onClick={() => selectedAppt && handleCancelAppointment(selectedAppt.id)}
+                    disabled={cancelingId === selectedAppt?.id}
+                    className="py-2 border border-destructive text-destructive rounded-lg text-xs hover:bg-red-50 transition-colors disabled:opacity-50">
+                    {cancelingId === selectedAppt?.id ? 'Kaymsahel...' : 'Annuler'}
+                  </button>
+                </div>
+              </>
+            ) : (
+              <>
+                <div className="space-y-4">
+                  <div>
+                    <label className="block text-xs font-medium mb-1.5">Wqet (Time)</label>
+                    <input
+                      type="time"
+                      value={editForm.time}
+                      onChange={e => setEditForm({ ...editForm, time: e.target.value })}
+                      className="w-full px-3 py-2.5 border border-border rounded-lg text-sm bg-background focus:outline-none focus:border-foreground/30"
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-xs font-medium mb-1.5">Notes</label>
+                    <textarea
+                      value={editForm.notes}
+                      onChange={e => setEditForm({ ...editForm, notes: e.target.value })}
+                      placeholder="Shi haja khassa..."
+                      rows={3}
+                      className="w-full px-3 py-2.5 border border-border rounded-lg text-sm bg-background focus:outline-none focus:border-foreground/30 resize-none"
+                    />
+                  </div>
+                </div>
+                <div className="grid grid-cols-2 gap-2 mt-4">
+                  <button
+                    onClick={() => setEditingId(null)}
+                    className="py-2 border border-border rounded-lg text-xs font-medium hover:bg-secondary transition-colors">
+                    Rja3
+                  </button>
+                  <button
+                    onClick={handleSaveEdit}
+                    disabled={editingId === selectedAppt.id && !editForm.time}
+                    className="py-2 bg-primary text-primary-foreground rounded-lg text-xs font-medium hover:opacity-90 transition-opacity disabled:opacity-50">
+                    Khazn
+                  </button>
+                </div>
+              </>
+            )}
           </div>
         </div>
       )}
