@@ -8,21 +8,36 @@ let cachedDb: any = null;
 
 export async function connectToDatabase() {
   if (cachedClient && cachedDb) {
-    return { client: cachedClient, db: cachedDb };
+    try {
+      await cachedClient.db('admin').command({ ping: 1 });
+      return { client: cachedClient, db: cachedDb };
+    } catch (pingError) {
+      console.warn('Cached connection failed ping, reconnecting...', pingError);
+      cachedClient = null;
+      cachedDb = null;
+    }
   }
 
   try {
-    const client = new MongoClient(MONGODB_URL);
+    if (!MONGODB_URL) {
+      throw new Error('MONGODB_URL environment variable is not set');
+    }
+
+    const client = new MongoClient(MONGODB_URL, {
+      serverSelectionTimeoutMS: 5000,
+      connectTimeoutMS: 10000,
+    });
     await client.connect();
     const db = client.db(DB_NAME);
 
     cachedClient = client;
     cachedDb = db;
 
+    console.log('MongoDB connected successfully to database:', DB_NAME);
     return { client, db };
   } catch (error) {
     console.error('MongoDB connection error:', error);
-    throw error;
+    throw new Error(`Failed to connect to MongoDB: ${error instanceof Error ? error.message : String(error)}`);
   }
 }
 

@@ -230,17 +230,24 @@ export async function POST(request: NextRequest, { params }: { params: { slug: s
       return NextResponse.json({ detail: 'Unauthorized' }, { status: 401 });
     }
 
-    const data = await request.json();
-    const { db } = await connectToDatabase();
-    const result = await db.collection('appointments').insertOne({
-      ...data,
-      createdAt: new Date(),
-    });
+    try {
+      const data = await request.json();
+      const { db } = await connectToDatabase();
+      const result = await db.collection('appointments').insertOne({
+        ...data,
+        createdAt: new Date(),
+      });
 
-    return NextResponse.json({
-      id: result.insertedId.toString(),
-      ...data,
-    }, { status: 201 });
+      return NextResponse.json({
+        id: result.insertedId.toString(),
+        ...data,
+      }, { status: 201 });
+    } catch (appointmentError: any) {
+      console.error('Appointments error:', appointmentError);
+      return NextResponse.json({
+        detail: `Failed to create appointment: ${appointmentError.message}`
+      }, { status: 500 });
+    }
   }
 
   return NextResponse.json({ detail: 'Not found' }, { status: 404 });

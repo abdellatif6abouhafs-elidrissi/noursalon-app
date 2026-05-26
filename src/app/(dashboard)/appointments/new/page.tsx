@@ -88,7 +88,9 @@ export default function NewAppointmentPage() {
       })
 
       if (!response.ok) {
-        throw new Error('Failed to create appointment')
+        const errorData = await response.json().catch(() => ({}))
+        const errorMsg = errorData.detail || `HTTP ${response.status}`
+        throw new Error(errorMsg)
       }
 
       setLoading(false)
@@ -97,7 +99,7 @@ export default function NewAppointmentPage() {
     } catch (error) {
       console.error('Error creating appointment:', error)
       setLoading(false)
-      alert('Failed to create appointment. Please try again.')
+      alert(`Failed to create appointment: ${error instanceof Error ? error.message : 'Unknown error'}`)
     }
   }
 
