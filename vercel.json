@@ -1,18 +1,8 @@
 {
-  "buildCommand": "npm run build",
-  "outputDirectory": ".next",
-  "functions": {
-    "api/index.py": {
-      "runtime": "python3.12",
-      "memory": 512,
-      "maxDuration": 30,
-      "includeFiles": "api/src/**"
-    }
-  },
   "rewrites": [
     {
       "source": "/api/(.*)",
-      "destination": "/api/index.py"
+      "destination": "/api"
     }
   ]
 }
