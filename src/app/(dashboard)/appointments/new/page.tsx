@@ -1,25 +1,10 @@
 'use client'
 
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { useRouter } from 'next/navigation'
 import Topbar from '@/components/layout/Topbar'
 import Avatar from '@/components/ui/Avatar'
 import { Search, Check, ChevronLeft } from 'lucide-react'
-
-const MOCK_CLIENTS = [
-  { id:'c1', firstName:'Fatima', lastName:'Zahra', phone:'+212 661 234 567' },
-  { id:'c2', firstName:'Nadia', lastName:'Bensalem', phone:'+212 662 345 678' },
-  { id:'c3', firstName:'Khadija', lastName:'Moussaoui', phone:'+212 663 456 789' },
-  { id:'c4', firstName:'Sara', lastName:'Benali', phone:'+212 664 567 890' },
-  { id:'c5', firstName:'Loubna', lastName:'El Fassi', phone:'+212 665 678 901' },
-  { id:'c6', firstName:'Amina', lastName:'Mansouri', phone:'+212 666 789 012' },
-]
-
-const MOCK_STAFF = [
-  { id:'st1', firstName:'Samia', lastName:'', color:'#1D9E75', specialties:['Qssa','Sbegha','L3roses'] },
-  { id:'st2', firstName:'Houda', lastName:'', color:'#7F77DD', specialties:['Keratin','Balayage','Soin'] },
-  { id:'st3', firstName:'Imane', lastName:'', color:'#D85A30', specialties:['Ongles','Manucure'] },
-]
 
 const MOCK_SERVICES = [
   { id:'sv1', name:'Qssa basita', duration:60, price:80 },
@@ -36,21 +21,75 @@ const TAKEN_SLOTS = ['09:00','10:30','11:00']
 
 type Step = 1 | 2 | 3 | 4
 
+type Client = { id: string; firstName: string; lastName: string; phone: string }
+type Staff = { id: string; firstName: string; lastName: string; color: string; specialties: string[] }
+
 export default function NewAppointmentPage() {
   const router = useRouter()
   const [step, setStep] = useState<Step>(1)
   const [search, setSearch] = useState('')
   const [loading, setLoading] = useState(false)
   const [success, setSuccess] = useState(false)
+  const [dataLoading, setDataLoading] = useState(true)
 
-  const [selectedClient, setSelectedClient] = useState<typeof MOCK_CLIENTS[0] | null>(null)
+  const [clients, setClients] = useState<Client[]>([])
+  const [staff, setStaff] = useState<Staff[]>([])
+
+  const [selectedClient, setSelectedClient] = useState<Client | null>(null)
   const [selectedService, setSelectedService] = useState<typeof MOCK_SERVICES[0] | null>(null)
-  const [selectedStaff, setSelectedStaff] = useState<typeof MOCK_STAFF[0] | null>(null)
+  const [selectedStaff, setSelectedStaff] = useState<Staff | null>(null)
   const [selectedDate, setSelectedDate] = useState(new Date().toISOString().split('T')[0])
   const [selectedTime, setSelectedTime] = useState('')
   const [notes, setNotes] = useState('')
 
-  const filteredClients = MOCK_CLIENTS.filter(c =>
+  useEffect(() => {
+    fetchData()
+  }, [])
+
+  const fetchData = async () => {
+    setDataLoading(true)
+    try {
+      const token = typeof window !== 'undefined' ? localStorage.getItem('token') : null
+
+      const [clientRes, staffRes] = await Promise.all([
+        fetch('/api/clients', {
+          headers: { 'Authorization': `Bearer ${token}` },
+        }),
+        fetch('/api/staff', {
+          headers: { 'Authorization': `Bearer ${token}` },
+        }),
+      ])
+
+      if (clientRes.ok) {
+        const clientData = await clientRes.json()
+        const formatted = clientData.map((c: any) => ({
+          id: c.id || c._id,
+          firstName: c.firstName || 'Unknown',
+          lastName: c.lastName || '',
+          phone: c.phone || '',
+        }))
+        setClients(formatted)
+      }
+
+      if (staffRes.ok) {
+        const staffData = await staffRes.json()
+        const formatted = staffData.map((s: any) => ({
+          id: s.id || s._id,
+          firstName: s.firstName || 'Unknown',
+          lastName: s.lastName || '',
+          color: s.color || '#1D9E75',
+          specialties: s.specialties || [],
+        }))
+        setStaff(formatted)
+      }
+    } catch (error) {
+      console.error('Failed to fetch data:', error)
+    } finally {
+      setDataLoading(false)
+    }
+  }
+
+  const filteredClients = clients.filter(c =>
     `${c.firstName} ${c.lastName} ${c.phone}`.toLowerCase().includes(search.toLowerCase())
   )
 
@@ -115,6 +154,17 @@ export default function NewAppointmentPage() {
         <p className="text-muted-foreground text-sm mb-1">{selectedClient?.firstName} {selectedClient?.lastName}</p>
         <p className="text-muted-foreground text-sm">{selectedService?.name} — {selectedTime} — {selectedDate}</p>
         <p className="text-xs text-muted-foreground mt-4">Kanrja3 l-mawa3id...</p>
+      </div>
+    )
+  }
+
+  if (dataLoading) {
+    return (
+      <div className="flex flex-col flex-1 overflow-hidden">
+        <Topbar title="Maw3id jdid" subtitle="Rezervi maw3id jdid" />
+        <div className="flex-1 flex items-center justify-center">
+          <p className="text-muted-foreground">Kanladdi clients w staff...</p>
+        </div>
       </div>
     )
   }
@@ -214,7 +264,7 @@ export default function NewAppointmentPage() {
               <div>
                 <h3 className="font-medium mb-3">Akhtari coiffeur/se</h3>
                 <div className="grid grid-cols-3 gap-3">
-                  {MOCK_STAFF.map(st => (
+                  {staff.map(st => (
                     <div
                       key={st.id}
                       onClick={() => setSelectedStaff(st)}
