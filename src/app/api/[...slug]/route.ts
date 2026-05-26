@@ -7,11 +7,16 @@ export const dynamic = 'force-dynamic';
 
 export async function GET(request: NextRequest, { params }: { params: { slug: string[] } }) {
   try {
-    const path = params.slug.join('/');
+    const path = params.slug?.join('/') || '';
 
-  if (path === 'health') {
-    return NextResponse.json({ status: 'ok' });
-  }
+    // Debug endpoint
+    if (path === 'debug') {
+      return NextResponse.json({ slug: params.slug, path });
+    }
+
+    if (path === 'health') {
+      return NextResponse.json({ status: 'ok' });
+    }
 
   if (path === 'auth/me') {
     const authHeader = request.headers.get('authorization');
@@ -96,9 +101,9 @@ export async function GET(request: NextRequest, { params }: { params: { slug: st
 
 export async function POST(request: NextRequest, { params }: { params: { slug: string[] } }) {
   try {
-  const path = params.slug.join('/');
+    const path = params.slug?.join('/') || '';
 
-  if (path === 'auth/register') {
+    if (path === 'auth/register') {
     const { email, password, name, salonName } = await request.json();
 
     if (!email || !password || !name) {
