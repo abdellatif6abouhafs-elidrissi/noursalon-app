@@ -224,26 +224,45 @@ export async function POST(request: NextRequest, { params }: { params: { slug: s
   }
 
   if (path === 'appointments') {
+    console.log('[API] POST /appointments');
     const authHeader = request.headers.get('authorization');
+    console.log('[API] Auth header present:', !!authHeader);
     const token = getTokenFromHeader(authHeader);
-    if (!token || !verifyToken(token)) {
-      return NextResponse.json({ detail: 'Unauthorized' }, { status: 401 });
+    console.log('[API] Token extracted:', !!token);
+
+    if (!token) {
+      console.log('[API] No token found - unauthorized');
+      return NextResponse.json({ detail: 'Unauthorized - no token' }, { status: 401 });
     }
+
+    const decoded = verifyToken(token);
+    if (!decoded) {
+      console.log('[API] Token verification failed');
+      return NextResponse.json({ detail: 'Unauthorized - invalid token' }, { status: 401 });
+    }
+    console.log('[API] Token verified for user:', decoded.email);
 
     try {
       const data = await request.json();
+      console.log('[API] Request body:', data);
+
+      console.log('[API] Connecting to MongoDB...');
       const { db } = await connectToDatabase();
+      console.log('[API] MongoDB connected');
+
+      console.log('[API] Inserting appointment...');
       const result = await db.collection('appointments').insertOne({
         ...data,
         createdAt: new Date(),
       });
+      console.log('[API] Appointment created with ID:', result.insertedId);
 
       return NextResponse.json({
         id: result.insertedId.toString(),
         ...data,
       }, { status: 201 });
     } catch (appointmentError: any) {
-      console.error('Appointments error:', appointmentError);
+      console.error('[API] Appointments error:', appointmentError);
       return NextResponse.json({
         detail: `Failed to create appointment: ${appointmentError.message}`
       }, { status: 500 });
