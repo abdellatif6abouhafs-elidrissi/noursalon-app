@@ -1,47 +1,37 @@
-import api from './api'
-import type { AuthResponse, LoginFormData, RegisterFormData, User } from '@/types'
+import jwt from 'jsonwebtoken';
+import bcrypt from 'bcryptjs';
 
-export const authService = {
-  async login(data: LoginFormData): Promise<AuthResponse> {
-    const res = await api.post<AuthResponse>('/auth/login', data)
-    return res.data
-  },
+const SECRET_KEY = process.env.SECRET_KEY || 'dev-secret-key-change-in-production-min-32-chars';
 
-  async register(data: RegisterFormData): Promise<AuthResponse> {
-    const res = await api.post<AuthResponse>('/auth/register', data)
-    return res.data
-  },
+export async function hashPassword(password: string): Promise<string> {
+  const salt = await bcrypt.genSalt(10);
+  return bcrypt.hash(password, salt);
+}
 
-  async me(): Promise<User> {
-    const res = await api.get<User>('/auth/me')
-    return res.data
-  },
+export async function verifyPassword(password: string, hash: string): Promise<boolean> {
+  return bcrypt.compare(password, hash);
+}
 
-  saveSession(response: AuthResponse) {
-    localStorage.setItem('ns_token', response.access_token)
-    localStorage.setItem('ns_user', JSON.stringify(response.user))
-    document.cookie = `ns_token=${response.access_token}; path=/; max-age=604800`
-  },
+export function createToken(userId: string, email: string): string {
+  return jwt.sign(
+    { sub: userId, email },
+    SECRET_KEY,
+    { expiresIn: '168h' }
+  );
+}
 
-  getUser(): User | null {
-    if (typeof window === 'undefined') return null
-    const raw = localStorage.getItem('ns_user')
-    return raw ? JSON.parse(raw) : null
-  },
+export function verifyToken(token: string): { sub: string; email: string } | null {
+  try {
+    const decoded = jwt.verify(token, SECRET_KEY) as { sub: string; email: string };
+    return decoded;
+  } catch {
+    return null;
+  }
+}
 
-  getToken(): string | null {
-    if (typeof window === 'undefined') return null
-    return localStorage.getItem('ns_token')
-  },
-
-  logout() {
-    localStorage.removeItem('ns_token')
-    localStorage.removeItem('ns_user')
-    document.cookie = 'ns_token=; path=/; max-age=0'
-    window.location.href = '/auth/login'
-  },
-
-  isAuthenticated(): boolean {
-    return !!this.getToken()
-  },
+export function getTokenFromHeader(authHeader?: string): string | null {
+  if (!authHeader || !authHeader.startsWith('Bearer ')) {
+    return null;
+  }
+  return authHeader.slice(7);
 }

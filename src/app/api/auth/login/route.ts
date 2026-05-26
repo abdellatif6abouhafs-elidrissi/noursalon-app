@@ -1,9 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { connectToDatabase } from '@/lib/mongodb';
-import bcrypt from 'bcryptjs';
-import jwt from 'jsonwebtoken';
-
-const SECRET_KEY = process.env.SECRET_KEY || 'dev-secret-key-change-in-production-min-32-chars';
+import { verifyPassword, createToken } from '@/lib/auth';
 
 export async function POST(request: NextRequest) {
   try {
@@ -21,18 +18,14 @@ export async function POST(request: NextRequest) {
 
     const user = await usersCollection.findOne({ email });
 
-    if (!user || !await bcrypt.compare(password, user.password)) {
+    if (!user || !await verifyPassword(password, user.password)) {
       return NextResponse.json(
         { detail: 'Invalid credentials' },
         { status: 401 }
       );
     }
 
-    const token = jwt.sign(
-      { sub: user._id.toString(), email: user.email },
-      SECRET_KEY,
-      { expiresIn: '168h' }
-    );
+    const token = createToken(user._id.toString(), email);
 
     return NextResponse.json({
       access_token: token,
@@ -41,6 +34,7 @@ export async function POST(request: NextRequest) {
         id: user._id.toString(),
         email: user.email,
         name: user.name,
+        salonName: user.salonName || '',
       },
     });
   } catch (error) {

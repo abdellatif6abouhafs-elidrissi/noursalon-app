@@ -15,16 +15,16 @@ export async function GET(request: NextRequest) {
     }
 
     const { db } = await connectToDatabase();
-    const clientsCollection = db.collection('clients');
-    const clients = await clientsCollection.find({}).toArray();
+    const appointmentsCollection = db.collection('appointments');
+    const appointments = await appointmentsCollection.find({}).toArray();
 
-    return NextResponse.json(clients.map(c => ({
-      id: c._id.toString(),
-      ...c,
+    return NextResponse.json(appointments.map(a => ({
+      id: a._id.toString(),
+      ...a,
       _id: undefined,
     })));
   } catch (error) {
-    console.error('Get clients error:', error);
+    console.error('Get appointments error:', error);
     return NextResponse.json(
       { detail: 'Internal server error' },
       { status: 500 }
@@ -46,9 +46,9 @@ export async function POST(request: NextRequest) {
 
     const data = await request.json();
     const { db } = await connectToDatabase();
-    const clientsCollection = db.collection('clients');
+    const appointmentsCollection = db.collection('appointments');
 
-    const result = await clientsCollection.insertOne({
+    const result = await appointmentsCollection.insertOne({
       ...data,
       createdAt: new Date(),
     });
@@ -58,7 +58,7 @@ export async function POST(request: NextRequest) {
       ...data,
     }, { status: 201 });
   } catch (error) {
-    console.error('Create client error:', error);
+    console.error('Create appointment error:', error);
     return NextResponse.json(
       { detail: 'Internal server error' },
       { status: 500 }
