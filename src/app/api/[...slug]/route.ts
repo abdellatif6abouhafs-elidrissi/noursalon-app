@@ -256,3 +256,45 @@ export async function POST(request: NextRequest, { params }: { params: { slug: s
     return NextResponse.json({ detail: error.message || 'Internal server error' }, { status: 500 });
   }
 }
+
+export async function DELETE(request: NextRequest, { params }: { params: { slug: string[] } }) {
+  try {
+    const path = params.slug?.join('/') || '';
+
+    if (path.startsWith('appointments/')) {
+      const authHeader = request.headers.get('authorization');
+      const token = getTokenFromHeader(authHeader);
+      if (!token || !verifyToken(token)) {
+        return NextResponse.json({ detail: 'Unauthorized' }, { status: 401 });
+      }
+
+      const id = path.split('/')[1];
+      if (!id) {
+        return NextResponse.json({ detail: 'Missing appointment ID' }, { status: 400 });
+      }
+
+      try {
+        const { db } = await connectToDatabase();
+        const result = await db.collection('appointments').deleteOne({
+          _id: new ObjectId(id),
+        });
+
+        if (result.deletedCount === 0) {
+          return NextResponse.json({ detail: 'Appointment not found' }, { status: 404 });
+        }
+
+        return NextResponse.json({ success: true }, { status: 200 });
+      } catch (appointmentError: any) {
+        console.error('Delete appointment error:', appointmentError);
+        return NextResponse.json({
+          detail: `Failed to delete appointment: ${appointmentError.message}`
+        }, { status: 500 });
+      }
+    }
+
+    return NextResponse.json({ detail: 'Not found' }, { status: 404 });
+  } catch (error: any) {
+    console.error('API error:', error);
+    return NextResponse.json({ detail: error.message || 'Internal server error' }, { status: 500 });
+  }
+}

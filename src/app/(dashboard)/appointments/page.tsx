@@ -45,6 +45,7 @@ export default function AppointmentsPage() {
   const [filterStatus, setFilterStatus] = useState<AppointmentStatus | 'all'>('all')
   const [savedAppts, setSavedAppts] = useState<Appointment[]>([])
   const [loading, setLoading] = useState(true)
+  const [cancelingId, setCancelingId] = useState<string | null>(null)
 
   useEffect(() => {
     const fetchAppointments = async () => {
@@ -119,6 +120,34 @@ export default function AppointmentsPage() {
   const prevWeek = () => { const d = new Date(currentDate); d.setDate(d.getDate() - 7); setCurrentDate(d) }
   const nextWeek = () => { const d = new Date(currentDate); d.setDate(d.getDate() + 7); setCurrentDate(d) }
   const isToday = (d: Date) => fmt(d) === fmt(new Date())
+
+  const handleCancelAppointment = async (apptId: string) => {
+    if (!confirm('Confirm cancellation of this appointment?')) return
+
+    setCancelingId(apptId)
+    try {
+      const token = typeof window !== 'undefined' ? localStorage.getItem('token') : null
+      const response = await fetch(`/api/appointments/${apptId}`, {
+        method: 'DELETE',
+        headers: {
+          'Authorization': `Bearer ${token}`,
+        },
+      })
+
+      if (response.ok) {
+        setSavedAppts(savedAppts.filter(a => a.id !== apptId))
+        setSelectedAppt(null)
+        alert('Appointment cancelled successfully')
+      } else {
+        alert('Failed to cancel appointment')
+      }
+    } catch (error) {
+      console.error('Error cancelling appointment:', error)
+      alert('Error cancelling appointment')
+    } finally {
+      setCancelingId(null)
+    }
+  }
 
   return (
     <div className="flex flex-col flex-1 overflow-hidden">
@@ -287,8 +316,13 @@ export default function AppointmentsPage() {
               </div>
             </div>
             <div className="grid grid-cols-2 gap-2">
-              <button className="py-2 bg-primary text-primary-foreground rounded-lg text-xs font-medium hover:opacity-90 transition-opacity">Modifier</button>
-              <button className="py-2 border border-destructive text-destructive rounded-lg text-xs hover:bg-red-50 transition-colors">Annuler</button>
+              <button disabled className="py-2 bg-primary text-primary-foreground rounded-lg text-xs font-medium hover:opacity-90 transition-opacity disabled:opacity-50">Modifier</button>
+              <button
+                onClick={() => selectedAppt && handleCancelAppointment(selectedAppt.id)}
+                disabled={cancelingId === selectedAppt?.id}
+                className="py-2 border border-destructive text-destructive rounded-lg text-xs hover:bg-red-50 transition-colors disabled:opacity-50">
+                {cancelingId === selectedAppt?.id ? 'Kaymsahel...' : 'Annuler'}
+              </button>
             </div>
           </div>
         </div>
