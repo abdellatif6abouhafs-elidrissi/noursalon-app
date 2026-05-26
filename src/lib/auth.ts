@@ -69,6 +69,12 @@ export const authService = {
     return token && user ? { token, user: JSON.parse(user) } : null;
   },
 
+  getUser() {
+    if (typeof window === 'undefined') return null;
+    const user = localStorage.getItem('user');
+    return user ? JSON.parse(user) : null;
+  },
+
   logout() {
     localStorage.removeItem('token');
     localStorage.removeItem('user');
