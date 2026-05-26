@@ -18,7 +18,7 @@ export async function GET(request: NextRequest) {
     const clientsCollection = db.collection('clients');
     const clients = await clientsCollection.find({}).toArray();
 
-    return NextResponse.json(clients.map(c => ({
+    return NextResponse.json(clients.map((c: any) => ({
       id: c._id.toString(),
       ...c,
       _id: undefined,
