@@ -63,10 +63,42 @@ export default function NewAppointmentPage() {
 
   const handleConfirm = async () => {
     setLoading(true)
-    await new Promise(r => setTimeout(r, 1200))
-    setLoading(false)
-    setSuccess(true)
-    setTimeout(() => router.push('/appointments'), 2000)
+    try {
+      const token = typeof window !== 'undefined' ? localStorage.getItem('token') : null
+      const appointmentData = {
+        clientId: selectedClient?.id,
+        clientName: `${selectedClient?.firstName} ${selectedClient?.lastName}`,
+        serviceId: selectedService?.id,
+        serviceName: selectedService?.name,
+        staffId: selectedStaff?.id,
+        staffName: selectedStaff?.firstName,
+        date: selectedDate,
+        time: selectedTime,
+        notes,
+        price: selectedService?.price,
+      }
+
+      const response = await fetch('/api/appointments', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${token}`,
+        },
+        body: JSON.stringify(appointmentData),
+      })
+
+      if (!response.ok) {
+        throw new Error('Failed to create appointment')
+      }
+
+      setLoading(false)
+      setSuccess(true)
+      setTimeout(() => router.push('/appointments'), 2000)
+    } catch (error) {
+      console.error('Error creating appointment:', error)
+      setLoading(false)
+      alert('Failed to create appointment. Please try again.')
+    }
   }
 
   const STEPS = ['Client', 'Service', 'Date & Wqet', 'Confirm']
