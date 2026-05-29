@@ -8,17 +8,6 @@ import { formatDH } from '@/lib/utils'
 import { ChevronLeft, ChevronRight, Calendar, List } from 'lucide-react'
 import type { Appointment, AppointmentStatus } from '@/types'
 
-const BASE_APPTS: Appointment[] = [
-  { id:'1', salonId:'s1', clientId:'c1', client:{id:'c1',firstName:'Fatima',lastName:'Zahra',phone:'+212 661 234 567'}, staffId:'st1', staff:{id:'st1',firstName:'Samia',lastName:'',color:'#1D9E75'}, serviceId:'sv1', service:{id:'sv1',name:'Qssa w Sbegha',duration:90,price:220,color:'#1D9E75'}, date:'2026-05-10', startTime:'09:00', endTime:'10:30', status:'done', price:220, createdAt:'' },
-  { id:'2', salonId:'s1', clientId:'c2', client:{id:'c2',firstName:'Nadia',lastName:'Bensalem',phone:'+212 662 345 678'}, staffId:'st2', staff:{id:'st2',firstName:'Houda',lastName:'',color:'#7F77DD'}, serviceId:'sv2', service:{id:'sv2',name:'Keratin',duration:120,price:350,color:'#7F77DD'}, date:'2026-05-10', startTime:'10:30', endTime:'12:30', status:'confirmed', price:350, createdAt:'' },
-  { id:'3', salonId:'s1', clientId:'c3', client:{id:'c3',firstName:'Khadija',lastName:'Moussaoui',phone:'+212 663 456 789'}, staffId:'st1', staff:{id:'st1',firstName:'Samia',lastName:'',color:'#1D9E75'}, serviceId:'sv3', service:{id:'sv3',name:"L3roses complet",duration:120,price:600,color:'#1D9E75'}, date:'2026-05-10', startTime:'11:00', endTime:'13:00', status:'confirmed', price:600, createdAt:'' },
-  { id:'4', salonId:'s1', clientId:'c4', client:{id:'c4',firstName:'Sara',lastName:'Benali',phone:'+212 664 567 890'}, staffId:'st3', staff:{id:'st3',firstName:'Imane',lastName:'',color:'#D85A30'}, serviceId:'sv4', service:{id:'sv4',name:'Ongles gel',duration:60,price:150,color:'#D85A30'}, date:'2026-05-10', startTime:'14:00', endTime:'15:00', status:'pending', price:150, createdAt:'' },
-  { id:'5', salonId:'s1', clientId:'c5', client:{id:'c5',firstName:'Loubna',lastName:'El Fassi',phone:'+212 665 678 901'}, staffId:'st2', staff:{id:'st2',firstName:'Houda',lastName:'',color:'#7F77DD'}, serviceId:'sv5', service:{id:'sv5',name:'Balayage',duration:120,price:400,color:'#7F77DD'}, date:'2026-05-10', startTime:'15:30', endTime:'17:30', status:'pending', price:400, createdAt:'' },
-  { id:'6', salonId:'s1', clientId:'c6', client:{id:'c6',firstName:'Amina',lastName:'Mansouri',phone:'+212 666 789 012'}, staffId:'st1', staff:{id:'st1',firstName:'Samia',lastName:'',color:'#1D9E75'}, serviceId:'sv1', service:{id:'sv1',name:'Qssa basita',duration:60,price:80,color:'#1D9E75'}, date:'2026-05-11', startTime:'09:00', endTime:'10:00', status:'confirmed', price:80, createdAt:'' },
-  { id:'7', salonId:'s1', clientId:'c7', client:{id:'c7',firstName:'Zineb',lastName:'Alaoui',phone:'+212 667 890 123'}, staffId:'st2', staff:{id:'st2',firstName:'Houda',lastName:'',color:'#7F77DD'}, serviceId:'sv2', service:{id:'sv2',name:'Keratin',duration:120,price:350,color:'#7F77DD'}, date:'2026-05-12', startTime:'10:00', endTime:'12:00', status:'confirmed', price:350, createdAt:'' },
-  { id:'8', salonId:'s1', clientId:'c8', client:{id:'c8',firstName:'Meriem',lastName:'Khattabi',phone:'+212 668 901 234'}, staffId:'st3', staff:{id:'st3',firstName:'Imane',lastName:'',color:'#D85A30'}, serviceId:'sv4', service:{id:'sv4',name:'Ongles gel',duration:60,price:150,color:'#D85A30'}, date:'2026-05-13', startTime:'14:00', endTime:'15:00', status:'pending', price:150, createdAt:'' },
-]
-
 const DAYS_AR = ['Had', 'Ithnayn', 'Thla', 'Arb3a', 'Khamis', 'Jma3a', 'Sebt']
 const HOURS = Array.from({ length: 11 }, (_, i) => i + 8)
 const HOUR_H = 60
@@ -40,7 +29,7 @@ function timeToMin(t: string) {
 
 export default function AppointmentsPage() {
   const [view, setView] = useState<'week' | 'list'>('week')
-  const [currentDate, setCurrentDate] = useState(new Date('2026-05-10'))
+  const [currentDate, setCurrentDate] = useState(new Date())
   const [selectedAppt, setSelectedAppt] = useState<Appointment | null>(null)
   const [filterStatus, setFilterStatus] = useState<AppointmentStatus | 'all'>('all')
   const [savedAppts, setSavedAppts] = useState<Appointment[]>([])
@@ -89,7 +78,7 @@ export default function AppointmentsPage() {
             date: appt.date,
             startTime: appt.time || '09:00',
             endTime: '18:00',
-            status: 'confirmed' as AppointmentStatus,
+            status: (appt.status || 'confirmed') as AppointmentStatus,
             price: appt.price || 0,
             createdAt: '',
           }))
@@ -105,13 +94,12 @@ export default function AppointmentsPage() {
     fetchAppointments()
   }, [])
 
-  const allAppts = [...BASE_APPTS, ...savedAppts]
   const weekDates = getWeekDates(currentDate)
   const weekStart = weekDates[0]
   const weekEnd = weekDates[6]
   const fmt = (d: Date) => d.toISOString().split('T')[0]
 
-  const weekAppts = allAppts.filter(a => {
+  const weekAppts = savedAppts.filter(a => {
     const inWeek = a.date >= fmt(weekStart) && a.date <= fmt(weekEnd)
     const statusOk = filterStatus === 'all' || a.status === filterStatus
     return inWeek && statusOk
@@ -200,7 +188,7 @@ export default function AppointmentsPage() {
             <button onClick={prevWeek} className="w-8 h-8 flex items-center justify-center border border-border rounded-lg hover:bg-secondary transition-colors">
               <ChevronLeft size={14} />
             </button>
-            <button onClick={() => setCurrentDate(new Date('2026-05-10'))} className="px-3 h-8 text-xs font-medium border border-border rounded-lg hover:bg-secondary transition-colors">
+            <button onClick={() => setCurrentDate(new Date())} className="px-3 h-8 text-xs font-medium border border-border rounded-lg hover:bg-secondary transition-colors">
               Lyoum
             </button>
             <button onClick={nextWeek} className="w-8 h-8 flex items-center justify-center border border-border rounded-lg hover:bg-secondary transition-colors">

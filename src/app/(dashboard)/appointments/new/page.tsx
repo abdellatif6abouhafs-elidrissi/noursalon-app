@@ -115,6 +115,7 @@ export default function NewAppointmentPage() {
         time: selectedTime,
         notes,
         price: selectedService?.price,
+        status: 'confirmed',
       }
 
       const response = await fetch('/api/appointments', {
@@ -228,7 +229,7 @@ export default function NewAppointmentPage() {
                 ))}
               </div>
               <button
-                onClick={() => router.push('/clients/new')}
+                onClick={() => router.push('/clients')}
                 className="w-full py-2.5 border border-dashed border-border rounded-xl text-sm text-muted-foreground hover:bg-secondary transition-colors"
               >
                 + Zid client jdid

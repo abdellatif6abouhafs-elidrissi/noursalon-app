@@ -121,7 +121,7 @@ export default function DashboardPage() {
               <div className="grid grid-cols-2 gap-2 p-3">
                 {[
                   { icon: '＋', label: 'Maw3id jdid', sub: 'Rezervi', href: '/appointments/new' },
-                  { icon: '👤', label: 'Client jdid', sub: 'Sjel', href: '/clients/new' },
+                  { icon: '👤', label: 'Client jdid', sub: 'Sjel', href: '/clients' },
                   { icon: '📊', label: 'Statistiques', sub: 'Dkhoul', href: '/stats' },
                   { icon: '🗓', label: 'Calendrier', sub: 'Mawa3id', href: '/appointments' },
                 ].map((a) => (

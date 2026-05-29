@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from 'react'
 import Link from 'next/link'
-import { usePathname } from 'next/navigation'
+import { usePathname, useRouter } from 'next/navigation'
 import { cn } from '@/lib/utils'
 import { authService } from '@/lib/auth'
 import {
@@ -22,6 +22,7 @@ const NAV = [
 
 export default function Sidebar() {
   const pathname = usePathname()
+  const router = useRouter()
   const [user, setUser] = useState<any>(null)
   const [hydrated, setHydrated] = useState(false)
 
@@ -80,7 +81,10 @@ export default function Sidebar() {
           </div>
         </div>
         <button
-          onClick={() => authService.logout()}
+          onClick={async () => {
+            authService.logout()
+            router.push('/auth/login')
+          }}
           className="w-full flex items-center gap-3 px-3 py-2 rounded-lg text-white/40 hover:text-white/70 hover:bg-white/5 text-sm transition-all"
         >
           <LogOut size={14} />

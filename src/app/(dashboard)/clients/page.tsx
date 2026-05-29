@@ -1,12 +1,14 @@
 'use client'
 
 import { useState, useEffect } from 'react'
+import { useRouter } from 'next/navigation'
 import Topbar from '@/components/layout/Topbar'
 import Avatar from '@/components/ui/Avatar'
 import { Search, Phone, Mail, MapPin, ChevronRight } from 'lucide-react'
 import type { Client } from '@/types'
 
 export default function ClientsPage() {
+  const router = useRouter()
   const [search, setSearch] = useState('')
   const [selected, setSelected] = useState<Client | null>(null)
   const [clients, setClients] = useState<Client[]>([])
@@ -112,7 +114,7 @@ export default function ClientsPage() {
 
   return (
     <div className="flex flex-col flex-1">
-      <Topbar title="Clients" subtitle={`${clients.length} clients`} action={{ label: 'Client jdid', href: '#' }} />
+      <Topbar title="Clients" subtitle={`${clients.length} clients`} action={{ label: 'Client jdid', onClick: () => setShowForm(true) }} />
 
       <div className="flex flex-1 overflow-hidden">
         {/* List */}
@@ -215,7 +217,7 @@ export default function ClientsPage() {
 
             <div className="p-5 border-t border-border space-y-2">
               <button
-                onClick={() => { setShowForm(true); setSelected(null) }}
+                onClick={() => router.push('/appointments/new')}
                 className="w-full py-2 bg-primary text-primary-foreground rounded-lg text-xs font-medium hover:opacity-90 transition-opacity">
                 Zid maw3id
               </button>
